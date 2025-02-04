@@ -22,6 +22,12 @@ jobs:
           cd devops_frontend
           npm install
           npm run build
+          
+      - name: Add EC2 Host to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Install Backend Dependencies
         run: |
@@ -53,6 +59,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: "docker-compose.yml"
           target: "~/mern-deployment/"
+          debug: true
 
       - name: SSH into EC2 & Deploy with Docker Compose
         uses: appleboy/ssh-action@v0.1.10
