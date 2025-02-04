@@ -3,7 +3,7 @@ name: Deploy MERN App to AWS
 on:
   push:
     branches:
-      - master  # Trigger on push to master branch
+      - master
 
 jobs:
   build:
@@ -17,24 +17,20 @@ jobs:
         with:
           node-version: 18
 
-      # Install and Build Frontend
       - name: Install & Build Frontend
         run: |
           cd devops_frontend
           npm install
           npm run build
 
-      # Install Backend Dependencies
       - name: Install Backend Dependencies
         run: |
           cd devops_backend
           npm install
 
-      # Login to Docker Hub
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Build & Push Docker Images
       - name: Build & Push Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-backend ./devops_backend
@@ -58,7 +54,7 @@ jobs:
           source: "docker-compose.yml"
           target: "~/mern-deployment/"
 
-      - name: SSH into EC2 & Deploy
+      - name: SSH into EC2 & Deploy with Docker Compose
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -73,22 +69,11 @@ jobs:
               sudo systemctl start docker
             fi
 
-            # Stop and remove existing containers
-            docker stop mern-frontend mern-backend || true
-            docker rm mern-frontend mern-backend || true
+            # Install Docker Compose if not installed
+            if ! command -v docker-compose &> /dev/null; then
+              sudo apt install -y docker-compose
+            fi
 
-            # Pull latest images
-            docker pull ${{ secrets.DOCKER_USERNAME }}/mern-backend
-            docker pull ${{ secrets.DOCKER_USERNAME }}/mern-frontend
-
-            # Create Docker network if not exists
-            docker network create mern-network || true
-
-            # Run backend
-            docker run -d --name mern-backend --network mern-network -p 5000:5000 \
-              -e MONGO_URI="${{ secrets.MONGO_URI }}" \
-              ${{ secrets.DOCKER_USERNAME }}/mern-backend
-
-            # Run frontend
-            docker run -d --name mern-frontend --network mern-network -p 80:80 \
-              ${{ secrets.DOCKER_USERNAME }}/mern-frontend
+            # Navigate to the deployment directory and run docker-compose
+            cd ~/mern-deployment
+            docker-compose up -d
