@@ -22,9 +22,15 @@ jobs:
       # 3️⃣ Install & Build Frontend
       - name: Install & Build Frontend
         run: |
-          cd frontend
+          cd devops_frontend
           npm install
           npm run build
+
+      # 3️⃣ Install & Build Backend
+      - name: Install & Build Frontend
+        run: |
+          cd devops_backend
+          npm install
 
       # 4️⃣ Login to Docker Hub
       - name: Login to Docker Hub
@@ -33,13 +39,13 @@ jobs:
       # 5️⃣ Build & Push Frontend Image
       - name: Build & Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-frontend:latest ./frontend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-frontend:latest ./devops_frontend
           docker push ${{ secrets.DOCKER_USERNAME }}/mern-frontend:latest
 
       # 6️⃣ Build & Push Backend Image
       - name: Build & Push Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-backend:latest ./backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-backend:latest ./devops_backend
           docker push ${{ secrets.DOCKER_USERNAME }}/mern-backend:latest
 
   deploy:
