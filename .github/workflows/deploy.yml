@@ -22,7 +22,7 @@ jobs:
           cd devops_frontend
           npm install
           npm run build
-          
+
       - name: Add EC2 Host to Known Hosts
         run: |
           mkdir -p ~/.ssh
@@ -51,6 +51,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+    - name: SSH into EC2 & Create directory for docker-compose.yml
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        script: |
+          mkdir -p ~/mern-deployment
+          
       - name: Copy docker-compose.yml to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
